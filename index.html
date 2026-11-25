@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Turkey Fry Timer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: backyard-practical, confident, a bit of county-fair swagger; safety stated plainly
+   IDEA: the big dial thermometer clipped to the side of a fryer pot
+   PICTURE: a huge countdown dial with a ring that drains like oil time, flame glow when live
+   COLOUR and TYPE: cranberry field, roasted-gold support, flame orange accent; Alfa Slab One + Barlow
+   LAYOUT: modest title strip, dial + controls in one composition, then checklist and doneness band */
+:root{color-scheme:light dark;
+ --bg:light-dark(#fffaf4,#170a0d);--ink:light-dark(#2a1014,#fbeee6);--mute:light-dark(#7a5a55,#c9a9a2);
+ --cran:light-dark(#8c1c2c,#3a0f18);--cranInk:#fff3ec;--gold:light-dark(#c8812a,#e3a14b);
+ --flame:#ff6a1a;--card:light-dark(#ffffff,#231216);--line:light-dark(#ecd9cf,#3c2328);--track:light-dark(#f1e2d8,#341c22)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Barlow,system-ui,sans-serif;overflow-x:clip}
+.band{padding:clamp(20px,3.5vw,48px) max(5vw,16px)}
+.wrap{max-width:1240px;margin:0 auto}
+header.band{background:var(--cran);color:var(--cranInk);padding-bottom:clamp(18px,2.5vw,32px)}
+h1{font:400 clamp(32px,5vw,48px)/1.05 "Alfa Slab One",Georgia,serif;margin:0;text-wrap:balance}
+header p{margin:6px 0 0;opacity:.85;max-width:60ch}
+h2{font:400 26px/1.1 "Alfa Slab One",Georgia,serif;margin:0 0 14px}
+.main{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:clamp(20px,4vw,56px);align-items:center}
+@media(max-width:760px){.main{grid-template-columns:minmax(0,1fr)}}
+.dialbox{position:relative;width:min(100%,460px);aspect-ratio:1;margin:0 auto}
+.dialbox svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.dialtext{position:absolute;inset:0;display:grid;place-content:center;text-align:center;pointer-events:none}
+.phase{font:600 17px/1 Barlow,sans-serif;color:var(--mute)}
+.count{font:700 clamp(64px,15vw,112px)/1 "Barlow Condensed",sans-serif;font-variant-numeric:tabular-nums;letter-spacing:-.01em;white-space:nowrap}
+.sub{font-size:16px;color:var(--mute);white-space:nowrap}
+.live .glow{opacity:1}.glow{opacity:0;transition:opacity .6s}
+.done .count{color:var(--flame)}
+@media(prefers-reduced-motion:no-preference){.live .glow{animation:flick 2.4s ease-in-out infinite}.alarm .count{animation:pulse 1s steps(2) infinite}}
+@keyframes flick{50%{opacity:.55}}@keyframes pulse{50%{opacity:.25}}
+.btns{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:18px}
+button{font:600 17px/1 Barlow,sans-serif;min-height:48px;padding:0 20px;border-radius:12px;border:2px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--flame);outline-offset:2px}
+button.go{background:var(--flame);border-color:var(--flame);color:#1d0700;font-size:19px;min-width:170px}
+button:disabled{opacity:.45;cursor:not-allowed}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:clamp(18px,3vw,28px)}
+label.lbl{display:block;font-weight:600;margin-bottom:6px}
+.wt{display:flex;gap:10px;align-items:stretch}
+.wt input{flex:1;font:700 34px/1 "Barlow Condensed",sans-serif;padding:8px 14px;border:2px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);width:100%}
+.seg{display:flex;border:2px solid var(--line);border-radius:12px;overflow:hidden}
+.seg button{border:0;border-radius:0;min-width:56px;padding:0 14px;background:transparent}
+.seg button[aria-pressed=true]{background:var(--cran);color:var(--cranInk)}
+.presets{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 20px}
+.presets button{min-height:44px;padding:0 14px;font-size:16px}
+input[type=range]{width:100%;accent-color:var(--flame);height:44px}
+.rate{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.rate b{font:700 24px/1 "Barlow Condensed",sans-serif;white-space:nowrap}
+.hint{font-size:14px;color:var(--mute);margin:0}
+.calc{margin-top:18px;padding-top:16px;border-top:1px dashed var(--line);display:grid;gap:6px}
+.calc div{display:flex;justify-content:space-between;gap:12px}
+.calc span:last-child{font-weight:600;white-space:nowrap;text-align:right}
+.warn{margin-top:14px;padding:12px 14px;border-radius:12px;background:light-dark(#fff0e2,#3a1d0e);border-left:4px solid var(--flame);font-size:15px}
+.warn[hidden]{display:none}
+.locked{font-size:14px;color:var(--flame);margin:8px 0 0}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:clamp(20px,3vw,40px)}
+.check{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.check label{display:flex;gap:12px;align-items:flex-start;padding:10px 4px;cursor:pointer;border-bottom:1px solid var(--line)}
+.check input{width:22px;height:22px;margin-top:2px;flex:none;accent-color:var(--cran)}
+.check input:checked+span{color:var(--mute);text-decoration:line-through}
+.temps{display:grid;gap:12px}
+.temp{display:flex;align-items:center;gap:16px;padding:14px 16px;border-radius:14px;background:var(--track)}
+.temp b{font:700 40px/1 "Barlow Condensed",sans-serif;color:var(--cran);white-space:nowrap;min-width:3.2em}
+:root[data-theme=dark] .temp b{color:var(--gold)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .temp b{color:var(--gold)}}
+.temp span{font-size:16px}
+footer{font-size:14px;color:var(--mute)}
+</style>
+</head>
+<body>
+<header class="band"><div class="wrap">
+ <h1>Turkey Fry Timer</h1>
+ <p>Punch in the weight, get the fry time, hit start the moment the bird is in the oil.</p>
+</div></header>
+
+<section class="band"><div class="wrap main">
+ <div>
+  <div class="dialbox" id="dial">
+   <svg viewBox="0 0 200 200" aria-hidden="true">
+    <defs>
+     <radialGradient id="gl" cx="50%" cy="50%" r="50%"><stop offset="70%" stop-color="#ff6a1a" stop-opacity="0"/><stop offset="100%" stop-color="#ff6a1a" stop-opacity=".35"/></radialGradient>
+     <linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb23e"/><stop offset="1" stop-color="#ff5a14"/></linearGradient>
+    </defs>
+    <circle class="glow" cx="100" cy="100" r="99" fill="url(#gl)"/>
+    <circle cx="100" cy="100" r="88" fill="var(--card)" stroke="var(--line)" stroke-width="2"/>
+    <g id="ticks"></g>
+    <circle cx="100" cy="100" r="78" fill="none" stroke="var(--track)" stroke-width="12"/>
+    <circle id="ring" cx="100" cy="100" r="78" fill="none" stroke="url(#rg)" stroke-width="12" stroke-linecap="round" transform="rotate(-90 100 100)" stroke-dasharray="490.09" stroke-dashoffset="0"/>
+   </svg>
+   <div class="dialtext">
+    <div class="phase" id="phase">Ready to fry</div>
+    <div class="count" id="count">42:00</div>
+    <div class="sub" id="sub">12 lb at 3.5 min/lb</div>
+   </div>
+  </div>
+  <div class="btns">
+   <button class="go" id="start">Start frying</button>
+   <button id="plus" disabled>+1 min</button>
+   <button id="reset" disabled>Reset</button>
+  </div>
+ </div>
+
+ <div class="panel">
+  <label class="lbl" for="weight">Turkey weight</label>
+  <div class="wt">
+   <input id="weight" type="number" inputmode="decimal" min="1" max="30" step="0.1" value="12">
+   <div class="seg" role="group" aria-label="Units">
+    <button id="u-lb" aria-pressed="true">lb</button><button id="u-kg" aria-pressed="false">kg</button>
+   </div>
+  </div>
+  <div class="presets" id="presets"></div>
+
+  <div class="rate"><label class="lbl" for="rate">Minutes per pound</label><b id="rateOut">3.5 min/lb</b></div>
+  <input id="rate" type="range" min="3" max="4" step="0.25" value="3.5">
+  <p class="hint">3 to 4 min/lb with oil held around 325–350°F. Go higher if your burner struggles to recover heat, and always confirm with a thermometer.</p>
+  <p class="locked" id="locked" hidden>Settings are locked while the timer runs. Reset to change them.</p>
+
+  <div class="calc">
+   <div><span>Fry time</span><span id="cTime">42 min</span></div>
+   <div><span id="cPullLbl">Pull it out at</span><span id="cPull">—</span></div>
+   <div><span>Start checking temp</span><span id="cCheck">5 min before</span></div>
+   <div><span>Fridge thaw beforehand</span><span id="cThaw">about 3 days</span></div>
+  </div>
+  <div class="warn" id="warn" hidden></div>
+ </div>
+</div></section>
+
+<section class="band" style="padding-top:0"><div class="wrap two">
+ <div>
+  <h2>Before you drop it</h2>
+  <ul class="check" id="checks"></ul>
+ </div>
+ <div>
+  <h2>How you know it's done</h2>
+  <div class="temps">
+   <div class="temp"><b>165°F</b><span>Thickest part of the breast, not touching bone. This is the USDA safe minimum.</span></div>
+   <div class="temp"><b>175°F</b><span>Thigh, for dark meat that isn't rubbery. Somewhere in 175–180°F is the sweet spot.</span></div>
+   <div class="temp"><b>350°F</b><span>Oil temperature before lowering the bird. Expect it to dip, then hold it at 325–350°F.</span></div>
+  </div>
+  <p class="hint" style="margin-top:14px">When the fry timer ends, lift the bird out with the burner off and let it rest 20–30 minutes before carving. A rest timer starts from here.</p>
+ </div>
+</div></section>
+
+<footer class="band" style="padding-top:0"><div class="wrap">Keep this tab open while frying. Alerts beep at 5 minutes left and at zero; the screen is kept awake where your browser allows.</div></footer>
+
+<script>
+{
+const $=id=>document.getElementById(id);
+const C=2*Math.PI*78, KEY='turkeyFryTimer.v1';
+const CHECKS=['Turkey is fully thawed, with no ice in the cavity','Bird patted completely dry inside and out, giblets and neck removed','Oil level measured beforehand with the water trick, so the pot won\'t overflow','Fryer is outdoors on flat ground, at least 10 ft from the house, garage, deck or trees','Grease-rated fire extinguisher nearby (never use water on an oil fire)','Burner OFF while lowering the turkey in slowly, then relit','Long gloves, goggles, and kids and pets kept well back'];
+const PRESETS=[10,12,14,16];
+let s={w:12,unit:'lb',rate:3.5,total:2520,remain:2520,endAt:null,phase:'idle',a5:false,checks:[]};
+try{const v=JSON.parse(localStorage.getItem(KEY));if(v&&typeof v==='object')s=Object.assign(s,v)}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(s))}catch(e){}};
+
+/* ticks on the dial face */
+$('ticks').innerHTML=Array.from({length:60},(_,i)=>{const a=i*6*Math.PI/180,big=i%5===0,r1=big?84:86,r2=88;return `<line x1="${100+r1*Math.sin(a)}" y1="${100-r1*Math.cos(a)}" x2="${100+r2*Math.sin(a)}" y2="${100-r2*Math.cos(a)}" stroke="var(--mute)" stroke-width="${big?1.4:.6}" opacity=".6"/>`}).join('');
+$('ring').setAttribute('stroke-dasharray',C.toFixed(2));
+$('presets').innerHTML=PRESETS.map(p=>`<button data-p="${p}">${p} lb</button>`).join('');
+$('checks').innerHTML=CHECKS.map((c,i)=>`<li><label><input type="checkbox" data-i="${i}"><span>${c}</span></label></li>`).join('');
+
+const lbs=()=>s.unit==='kg'?s.w*2.20462:s.w;
+const fmt=sec=>{sec=Math.max(0,Math.ceil(sec));const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),x=sec%60;return h?`${h}:${String(m).padStart(2,'0')}:${String(x).padStart(2,'0')}`:`${m}:${String(x).padStart(2,'0')}`};
+const clock=ms=>new Date(ms).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+const mins=sec=>{const m=Math.round(sec/60);return m>=60?`${Math.floor(m/60)} hr ${m%60} min`:`${m} min`};
+const running=()=>s.endAt!==null;
+const remaining=()=>running()?(s.endAt-Date.now())/1000:s.remain;
+function recalc(){if(s.phase!=='idle')return;const l=lbs();s.total=Math.round(l*s.rate*60);s.remain=s.total}
+
+/* audio + wake lock */
+let ac=null,wake=null,alarmIv=null;
+function unlock(){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();ac.resume&&ac.resume()}catch(e){}}
+function beep(n=3,f=880){if(!ac)return;try{for(let i=0;i<n;i++){const o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime+i*.32;o.type='square';o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.25,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+.24);o.connect(g).connect(ac.destination);o.start(t);o.stop(t+.26)}}catch(e){}try{navigator.vibrate&&navigator.vibrate([300,150,300])}catch(e){}}
+async function keepAwake(on){try{if(on&&!wake&&navigator.wakeLock){wake=await navigator.wakeLock.request('screen');wake.addEventListener('release',()=>wake=null)}else if(!on&&wake){await wake.release();wake=null}}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&running())keepAwake(true)});
+function startAlarm(){stopAlarm();beep(4,988);alarmIv=setInterval(()=>beep(4,988),3500)}
+function stopAlarm(){if(alarmIv){clearInterval(alarmIv);alarmIv=null}}
+
+function render(){
+ const idle=s.phase==='idle',rem=remaining(),live=running();
+ $('weight').value=s.w;$('rate').value=s.rate;
+ $('u-lb').setAttribute('aria-pressed',s.unit==='lb');$('u-kg').setAttribute('aria-pressed',s.unit==='kg');
+ $('rateOut').textContent=`${s.rate} min/lb`;
+ [$('weight'),$('rate'),$('u-lb'),$('u-kg'),...document.querySelectorAll('#presets button')].forEach(el=>el.disabled=!idle);
+ $('locked').hidden=idle;
+ const l=lbs(),wtxt=s.unit==='kg'?`${s.w} kg (${l.toFixed(1)} lb)`:`${s.w} lb`;
+ $('count').textContent=fmt(rem);
+ const frac=s.total>0?Math.max(0,Math.min(1,rem/s.total)):0;
+ $('ring').setAttribute('stroke-dashoffset',(C*(1-frac)).toFixed(2));
+ const d=$('dial');d.classList.toggle('live',live&&s.phase==='fry');d.classList.toggle('done',s.phase==='done'||s.phase==='restdone');d.classList.toggle('alarm',!!alarmIv);
+ const P={idle:'Ready to fry',fry:live?'Frying':'Paused',done:'Pull the turkey',rest:live?'Resting':'Rest paused',restdone:'Time to carve'};
+ $('phase').textContent=P[s.phase];
+ $('sub').textContent=s.phase==='done'?'Check 165°F breast / 175°F thigh':s.phase.startsWith('rest')?'Rest before carving':`${wtxt} at ${s.rate} min/lb`;
+ const st=$('start');
+ st.textContent={idle:'Start frying',fry:live?'Pause':'Resume',done:alarmIv?'Stop alarm':'Start 20 min rest',rest:live?'Pause':'Resume',restdone:alarmIv?'Stop alarm':'All done'}[s.phase];
+ st.disabled=s.phase==='restdone'&&!alarmIv;
+ $('plus').disabled=idle;$('reset').disabled=idle;
+ $('cTime').textContent=mins(s.phase.startsWith('rest')?s.fryTotal||s.total:s.total);
+ if(s.phase==='fry'&&live){$('cPullLbl').textContent='Pull it out at';$('cPull').textContent=clock(s.endAt);$('cCheck').textContent=clock(s.endAt-300000)}
+ else if(idle){$('cPullLbl').textContent='If you drop it now, done at';$('cPull').textContent=clock(Date.now()+s.total*1000);$('cCheck').textContent='5 min before'}
+ else{$('cPullLbl').textContent='Pull it out at';$('cPull').textContent=s.phase==='fry'?'paused':'done';$('cCheck').textContent='—'}
+ const thaw=Math.max(1,Math.ceil(l/4.5));$('cThaw').textContent=`about ${thaw} day${thaw>1?'s':''}`;
+ const w=$('warn');let msg='';
+ if(l>14)msg=`At ${l.toFixed(1)} lb this bird is over the 14 lb most fryer makers recommend. Bigger birds tend to burn outside before the inside is done and need more oil. Consider frying two smaller turkeys, or separating the breast and leg quarters.`;
+ else if(l<6&&l>0)msg='That\'s a small bird. Start checking the temperature early, since small turkeys and breasts can overshoot fast.';
+ w.hidden=!msg;w.textContent=msg;
+ document.querySelectorAll('#checks input').forEach(c=>c.checked=s.checks.includes(+c.dataset.i));
+ document.title=live||s.phase!=='idle'?`${fmt(rem)} · ${P[s.phase]}`:'Turkey Fry Timer';
+}
+
+function tick(){
+ if(running()){
+  const rem=remaining();
+  if(s.phase==='fry'&&!s.a5&&rem<=300&&s.total>360){s.a5=true;save();beep(2,660)}
+  if(rem<=0){s.endAt=null;s.remain=0;if(s.phase==='fry')s.phase='done';else if(s.phase==='rest')s.phase='restdone';save();startAlarm();keepAwake(false)}
+ }
+ render();
+}
+
+$('start').onclick=()=>{
+ unlock();
+ if(alarmIv){stopAlarm();render();return}
+ if(s.phase==='idle'){recalc();s.phase='fry';s.a5=false;s.endAt=Date.now()+s.total*1000;keepAwake(true)}
+ else if(s.phase==='done'){s.fryTotal=s.total;s.phase='rest';s.total=s.remain=1200;s.endAt=Date.now()+1200000;keepAwake(true)}
+ else if(running()){s.remain=remaining();s.endAt=null}
+ else if(s.phase==='fry'||s.phase==='rest'){s.endAt=Date.now()+s.remain*1000;keepAwake(true)}
+ save();render();
+};
+$('plus').onclick=()=>{unlock();stopAlarm();
+ if(s.phase==='done'){s.phase='fry';s.remain=0;s.endAt=Date.now()}
+ else if(s.phase==='restdone'){s.phase='rest';s.remain=0;s.endAt=Date.now()}
+ if(running())s.endAt+=60000;else s.remain+=60;
+ s.total+=60;if(remaining()>300)s.a5=false;save();render()};
+let armed=false;
+$('reset').onclick=()=>{const b=$('reset');if(!armed){armed=true;b.textContent='Tap again to reset';setTimeout(()=>{armed=false;b.textContent='Reset'},3000);return}
+ armed=false;b.textContent='Reset';stopAlarm();keepAwake(false);s.phase='idle';s.endAt=null;s.a5=false;delete s.fryTotal;recalc();save();render()};
+$('weight').oninput=e=>{const v=parseFloat(e.target.value);if(v>0&&v<=40){s.w=v;recalc();save();render()}};
+$('rate').oninput=e=>{s.rate=parseFloat(e.target.value);recalc();save();render()};
+const setUnit=u=>{if(s.unit===u)return;s.w=+(u==='kg'?s.w/2.20462:s.w*2.20462).toFixed(1);s.unit=u;recalc();save();render()};
+$('u-lb').onclick=()=>setUnit('lb');$('u-kg').onclick=()=>setUnit('kg');
+$('presets').onclick=e=>{const p=e.target.closest('button');if(!p)return;s.unit='lb';s.w=+p.dataset.p;recalc();save();render()};
+$('checks').onchange=e=>{const i=+e.target.dataset.i;s.checks=e.target.checked?[...new Set([...s.checks,i])]:s.checks.filter(x=>x!==i);save()};
+
+if(running())keepAwake(true);
+recalc();render();setInterval(tick,250);
+}
+</script>
+</body>
+</html>
