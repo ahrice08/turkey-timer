@@ -112,7 +112,7 @@ footer{font-size:14px;color:var(--mute)}
  <div class="panel">
   <label class="lbl" for="weight">Turkey weight</label>
   <div class="wt">
-   <input id="weight" type="number" inputmode="decimal" min="1" max="30" step="0.1" value="12">
+   <input id="weight" type="text" inputmode="decimal" autocomplete="off" value="12" aria-describedby="locked">
    <div class="seg" role="group" aria-label="Units">
     <button id="u-lb" aria-pressed="true">lb</button><button id="u-kg" aria-pressed="false">kg</button>
    </div>
@@ -187,7 +187,7 @@ function stopAlarm(){if(alarmIv){clearInterval(alarmIv);alarmIv=null}}
 
 function render(){
  const idle=s.phase==='idle',rem=remaining(),live=running();
- $('weight').value=s.w;$('rate').value=s.rate;
+ if(document.activeElement!==$('weight'))$('weight').value=s.w;$('rate').value=s.rate;
  $('u-lb').setAttribute('aria-pressed',s.unit==='lb');$('u-kg').setAttribute('aria-pressed',s.unit==='kg');
  $('rateOut').textContent=`${s.rate} min/lb`;
  [$('weight'),$('rate'),$('u-lb'),$('u-kg'),...document.querySelectorAll('#presets button')].forEach(el=>el.disabled=!idle);
@@ -243,7 +243,8 @@ $('plus').onclick=()=>{unlock();stopAlarm();
 let armed=false;
 $('reset').onclick=()=>{const b=$('reset');if(!armed){armed=true;b.textContent='Tap again to reset';setTimeout(()=>{armed=false;b.textContent='Reset'},3000);return}
  armed=false;b.textContent='Reset';stopAlarm();keepAwake(false);s.phase='idle';s.endAt=null;s.a5=false;delete s.fryTotal;recalc();save();render()};
-$('weight').oninput=e=>{const v=parseFloat(e.target.value);if(v>0&&v<=40){s.w=v;recalc();save();render()}};
+$('weight').oninput=e=>{const v=parseFloat(e.target.value.replace(',','.'));if(v>0&&v<=40){s.w=Math.round(v*100)/100;recalc();save();render()}};
+$('weight').onblur=()=>{$('weight').value=s.w};
 $('rate').oninput=e=>{s.rate=parseFloat(e.target.value);recalc();save();render()};
 const setUnit=u=>{if(s.unit===u)return;s.w=+(u==='kg'?s.w/2.20462:s.w*2.20462).toFixed(1);s.unit=u;recalc();save();render()};
 $('u-lb').onclick=()=>setUnit('lb');$('u-kg').onclick=()=>setUnit('kg');
